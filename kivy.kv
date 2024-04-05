@@ -148,12 +148,13 @@ Screen:
                             pos_hint: {"center_x": .5, "center_y": .3}
                             elevation: 6
                             orientation: "vertical"
-                            MDLabel:
+                            MDRaisedButton:
                                 size_hint: 1, .4
                                 id: balance_user
                                 text: "15КК"
                                 font_size: '40sp'
                                 halign: 'center'
+                                on_release: app.update()
                     MDFloatLayout:
                         size_hint: 1, .3
                         TooltipIcon:
@@ -163,13 +164,13 @@ Screen:
                     MDTabs:
                         id: tabs
                         Tab:
-                            title: "          История         "
+                            title: " История "
                             ScrollView:
                                 MDList:
                                     id: scroll_history
 
                         Tab:
-                            title: "         Магазин         "
+                            title: " Магазин "
                             MDScrollView:
                                 GridLayout:
                                     spacing: 3
@@ -290,13 +291,13 @@ Screen:
                                         elevation: 6
                                         orientation: "vertical"
                         Tab:
-                            title: "         Начисление      "
+                            title: " Начисление "
                             MDTabs:
                                 Tab:
-                                    title: "                  Конкурсы                       "
+                                    title: " Конкурсы "
                                     id: charge_contests
                                 Tab:
-                                    title: "                  Другое                       "
+                                    title: " Другое "
                                     ScrollView:
                                         MDList:
                                             OneLineAvatarListItem:
@@ -392,6 +393,7 @@ Screen:
                             halign: "center"
                             font_size: "30sp"
                             pos_hint: {"center_x": .5, "center_y": .74}
+                            id: admin_name
                         MDLabel:
                             text: "02.10.2009"
                             font_style: "Subtitle1"
@@ -405,7 +407,7 @@ Screen:
                                 scroll_y: None
                                 OneLineAvatarListItem:
                                     on_release: app.screen("settingsadmin")
-                                    text: "account-group"
+                                    text: "Добавление аккаунта"
                                     IconLeftWidget:
                                         icon: "account-plus"
                                 OneLineAvatarListItem:
@@ -529,7 +531,7 @@ Screen:
                                 size_hint: .75, .40
                                 pos_hint: {"center_x": .5, "center_y": .5}
                                 hint_text: 'Поиск по ФИО, Дата рождения, ID'
-                                on_text: app.search_students(self.text, True)
+                                on_text: app.search_students(self.text)
                             MDIconButton:
                                 icon: 'magnify'
                                 pos_hint: {"center_x": .85, "center_y": .5}
