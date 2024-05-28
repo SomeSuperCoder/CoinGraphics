@@ -1,7 +1,7 @@
 <TooltipIcon@MDFloatingActionButton+MDTooltip>
 <Scr@MDScreen>
     FitImage:
-        source: 'scr/4882066.jpg'
+        source: 'scr/background2.jpg'
         size_hint_y: 1
         pos_hint: {"center_x": .5, "center_y": .5}
 <ContentNavigationDrawer>:
@@ -75,8 +75,8 @@ Screen:
                             source: "scr/logo.png"
                             halign: 'center'
                             pos_hint: {"center_x": .5, "center_y": .93}
-                            size_hint: .85, .12
-                            height: "100dp"
+                            size_hint: .70, .1
+                            height: "30dp"
                         MDLabel:
                             text: "ВХОД"
                             font_size: "30sp"
@@ -104,13 +104,19 @@ Screen:
                             text_size: "39sp"
                             pos_hint: {"center_x": .5, "center_y": .315}
                             on_release:
-                                app.log_in()
+                                app.threading("log_in")
+                        MDSpinner:
+                            id: spinner_login_screen
+                            size_hint: None, None
+                            size: dp(75), dp(75)
+                            pos_hint: {'center_x': .5, 'center_y': .5}
+                            active: False
             MDScreen:
                 name: 'main_screen'
                 FitImage:
-                    source: 'scr/3661943.jpg'
-                    size_hint_y: .4
-                    pos_hint: {"center_x": .5, "center_y": .815}
+                    source: 'scr/background2.jpg'
+                    size_hint_y: .5
+                    pos_hint: {"center_x": .5, "center_y": .85}
                 BoxLayout:
                     orientation: 'vertical'
                     MDFloatLayout:
@@ -159,7 +165,7 @@ Screen:
                         size_hint: 1, .3
                         TooltipIcon:
                             icon: 'shopping'
-                            tooltip_text: 'Потратить балы'
+                            tooltip_text: 'Потратить баллы'
                             pos_hint: {'center_x': .5, 'center_y': .7}
                     MDTabs:
                         id: tabs
@@ -411,8 +417,18 @@ Screen:
                                     IconLeftWidget:
                                         icon: "account-plus"
                                 OneLineAvatarListItem:
-                                    text: "Выйти"
-                                    on_release: app.screen('login_screen')
+                                    text: "Создать отчет"
+                                    on_release: app.dialog_report()
+                                    IconLeftWidget:
+                                        icon: "table"
+                                OneLineAvatarListItem:
+                                    text: "Сбросить систему рейтинга"
+                                    on_release: app.confirmation_report()
+                                    IconLeftWidget:
+                                        icon: "cloud-refresh"
+                                OneLineAvatarListItem:
+                                    text: "Назад"
+                                    on_release: app.screen('teacher_screen')
                                     IconLeftWidget:
                                         icon: "exit-to-app"
                         MDFillRoundFlatIconButton:
@@ -452,7 +468,7 @@ Screen:
                         size_hint: .85, .07
                         width: "400dp"
                         hint_text: "ФИО"
-                        pos_hint: {"center_x": .5, "center_y": .55}
+                        pos_hint: {"centespr_x": .5, "center_y": .55}
                     MDTextField:
                         id: birthday_admin_new
                         mode: "rectangle"
@@ -479,7 +495,7 @@ Screen:
                     orientation: 'vertical'
                     MDFloatLayout:
                         size_hint: 1, .14
-                        md_bg_color: 1, 1, 1, 0.2
+                        md_bg_color: 1, 1, 1, 0.07
                         MDIconButton:
                             icon: 'account-circle-outline'
                             icon_size: '60sp'
@@ -509,7 +525,7 @@ Screen:
                         orientation: "vertical"
                         size_hint_y: None
                         height: "4dp"
-                        md_bg_color: 1, 1, 1, 0.2
+                        md_bg_color: 1, 1, 1, 0.07
                     MDBoxLayout:
                         orientation: 'vertical'
                         size_hint: 1, .8
@@ -517,25 +533,26 @@ Screen:
                         padding: dp(20)
                         MDFloatLayout:
                             adaptive_height: True
-
                             MDIconButton:
                                 icon_size: '25sp'
                                 md_bg_color: "#222126"
                                 icon_color: "#ffffff"
-                                icon: "account-plus"
+                                icon: "account-star-outline" if id_teacher_screen.text == 'admin' else 'account-plus'
                                 pos_hint: {"center_x": .97, "center_y": .5}
-                                on_release: app.screen("new_users")
+                                on_release:  app.screen("admin_screen") if id_teacher_screen.text == 'admin' else app.screen("new_users")
                             MDTextField:
                                 id: search_students
                                 mode: "round"
-                                size_hint: .75, .40
+                                size_hint: .7, 1
                                 pos_hint: {"center_x": .5, "center_y": .5}
-                                hint_text: 'Поиск по ФИО, Дата рождения, ID'
-                                on_text: app.search_students(self.text)
-                            MDIconButton:
-                                icon: 'magnify'
-                                pos_hint: {"center_x": .85, "center_y": .5}
+                                hint_text: 'Поиск по ФИО'
+                                on_text: app.threading_search(self.text)
+
+#                            MDIconButton:
+#                                icon: 'magnify'
+#                                pos_hint: {"center_x": .85, "center_y": .5}
                         MDScrollView:
+
                             MDList:
                                 id: container
             Scr:
@@ -575,7 +592,6 @@ Screen:
                     ScrollView:
                         MDBoxLayout:
                             id: generate_table
-
         MDNavigationDrawer:
             id: nav_drawer
             anchor: "right"
