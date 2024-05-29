@@ -3,6 +3,8 @@ from kivymd.uix.floatlayout import MDFloatLayout
 from kivy.core.window import Window
 from search import search
 from kivymd.uix.list import IconLeftWidget
+import pandas
+import os
 
 import random
 from kivy.clock import mainthread
@@ -30,6 +32,8 @@ import random
 import requests
 from url import url
 
+if 'ANDROID_ARGUMENT' not in os.environ and 'ANDROID_PRIVATE' not in os.environ:
+    Window.size = (520, 900)
 
 def get_account(login):
     result = json.loads(requests.get(f"{url}/get_account/{login}").text)
@@ -248,56 +252,7 @@ class MoneyTest(MDApp):
 
     def notification(self):
         self.root.ids.notification_bell.icon = 'bell-ring'
-
-    def on_start(self):
-        self.root.ids.text_hint_create.text = """Для создания пользователе\n1: Выберети файл формата Excel\n2: Проверьте данные сгенерировав таблицу\n4: Создайте пользователей\n3: Отправте на почту копию таблицы        """
-        charge_contests = MDDataTable(
-            column_data=[
-                ("Уровни", dp(40)),
-                ("1 место", dp(15)),
-                ("2 место", dp(15)),
-                ("3 место", dp(15)),
-                ("Участие", dp(15)),
-            ],
-            row_data=[
-                (
-                    "Кванториум_НЧК",
-                    "3",
-                    "2",
-                    "1",
-                    "-",
-                ),
-                (
-                    "Городской",
-                    "5",
-                    "3",
-                    "2",
-                    "1",
-                ),
-                (
-                    "Республиканский",
-                    "7",
-                    "5",
-                    "3",
-                    "2"
-                ),
-                (
-                    "Межрегиональный",
-                    "10",
-                    "7",
-                    "5",
-                    "3",
-                ),
-                (
-                    "Всероссийский",
-                    "15",
-                    "10",
-                    "7",
-                    "5",
-                ),
-            ],
-        )
-        self.root.ids.charge_contests.add_widget(charge_contests)
+        
 
     def send_mail(self):
         if len(self.dialog_for_send.content_cls.ids.email_for_send.text) == 0:
@@ -677,7 +632,7 @@ class MoneyTest(MDApp):
         try:
             login = self.root.ids.login.text
             password = self.root.ids.password.text
-            # self.root.ids.spinner_login_screen.active = True
+            self.root.ids.spinner_login_screen.active = True
             print("Pre check")
             check = requests.get(f"{url}/check_login_credentials?login={login}&password={hashlib.sha256(password.encode()).hexdigest()}").text
             print(f"The check is: {check}")
@@ -714,6 +669,53 @@ class MoneyTest(MDApp):
             self.root.ids.balance_user.text = f"{balance} Kvant"
             self.root.ids.name_profile_main.text = f"{family} {name} \n{dad}"
             self.root.ids.name_main_screen.text = f"{name} >"
+            charge_contests = MDDataTable(
+                column_data=[
+                    ("Уровни", dp(40)),
+                    ("1 место", dp(15)),
+                    ("2 место", dp(15)),
+                    ("3 место", dp(15)),
+                    ("Участие", dp(15)),
+                ],
+                row_data=[
+                    (
+                        "Кванториум_НЧК",
+                        "3",
+                        "2",
+                        "1",
+                        "-",
+                    ),
+                    (
+                        "Городской",
+                        "5",
+                        "3",
+                        "2",
+                        "1",
+                    ),
+                    (
+                        "Республиканский",
+                        "7",
+                        "5",
+                        "3",
+                        "2"
+                    ),
+                    (
+                        "Межрегиональный",
+                        "10",
+                        "7",
+                        "5",
+                        "3",
+                    ),
+                    (
+                        "Всероссийский",
+                        "15",
+                        "10",
+                        "7",
+                        "5",
+                    ),
+                ],
+            )
+            self.root.ids.charge_contests.add_widget(charge_contests)
         elif len(login) == 6:
             self.root.ids.screen_manager.current = "teacher_screen"
             self.root.ids.name_teacher_screen.text = name

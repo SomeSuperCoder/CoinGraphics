@@ -468,7 +468,7 @@ Screen:
                         size_hint: .85, .07
                         width: "400dp"
                         hint_text: "ФИО"
-                        pos_hint: {"centespr_x": .5, "center_y": .55}
+                        pos_hint: {"center_x": .5, "center_y": .55}
                     MDTextField:
                         id: birthday_admin_new
                         mode: "rectangle"
@@ -543,7 +543,7 @@ Screen:
                             MDTextField:
                                 id: search_students
                                 mode: "round"
-                                size_hint: .7, 1
+                                size_hint: .7, 0.5
                                 pos_hint: {"center_x": .5, "center_y": .5}
                                 hint_text: 'Поиск по ФИО'
                                 on_text: app.threading_search(self.text)
@@ -570,6 +570,7 @@ Screen:
                             orientation: "vertical"
                             MDLabel:
                                 id: text_hint_create
+                                text: "Для создания пользователе\n1: Выберети файл формата Excel\n2: Проверьте данные сгенерировав таблицу\n4: Создайте пользователей\n3: Отправте на почту копию таблицы "
                                 pos_hint: {"center_x": .54, "center_y": .5}
 
                         MDRaisedButton:
