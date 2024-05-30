@@ -1,3 +1,4 @@
 .buildozer
-.venv
+.ve
 __pycache__
+.vscode

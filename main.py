@@ -338,11 +338,38 @@ class MoneyTest(MDApp):
                     Item(text="Сбросить пароль", on_release=lambda x=task_windows.text: self.dialog_windows_task(x)),
                     Item(text="Начислить", on_release=lambda x=task_windows.text: self.dialog_windows_task(x)),
                     Item(text="Списание", on_release=lambda x=task_windows.text: self.dialog_windows_task(x)),
+                    Item(text="История", on_release=lambda x: threading.Thread(target=self.history_threading, args=(task_windows.tertiary_text,)).start())
                 ],
 
             )
             self.dialog_list.open()
             threading.Thread(target=self.balance_def, args=(self.id,)).start()
+    
+    def history_threading(self, login):
+        print(login)
+        login = login.replace("ID: ", "")
+        account = get_account(login)
+        history = account["history"]
+        self.history_not_threading(history)
+
+    @mainthread
+    def history_not_threading(self, history):
+        self.screen("history_students")
+        self.root.ids.list_history_students_admin.clear_widgets()
+        self.dialog_close("dialog_list")
+        for i in reversed(history):
+            self.root.ids.list_history_students_admin.add_widget(
+                ThreeLineIconListItem(
+                    IconLeftWidget(
+                        icon="history"
+                    ),
+                    text=str(i['sum']),
+                    secondary_text=f"{i['for_what']}",
+                    tertiary_text=str(i['time'])
+                ))
+
+
+
     @mainthread
     def dialog_close(self, a):
         eval(f"self.{a}.dismiss()")
@@ -478,6 +505,7 @@ class MoneyTest(MDApp):
             self.dialog_change.title = "Списать"
             self.dialog_change.content_cls.ids.first_field.hint_text = "Сколько"
             self.dialog_change.content_cls.ids.secondary_field.hint_text = "За что"
+
 
     def menu_callback(self, text_item):
         self.level = f"{text_item}"

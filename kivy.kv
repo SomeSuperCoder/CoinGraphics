@@ -63,7 +63,7 @@ Screen:
 
         MDScreenManager:
             id: screen_manager
-            Scr:
+            Screen:
                 name: "login_screen"
                 MDCard:
                     size_hint: .8, .88
@@ -439,11 +439,11 @@ Screen:
             Scr:
                 name:  "settingsadmin"
                 MDFloatLayout:
-                    MDLabel:
-                        text: "Заполините данные\nнового преподавателя"
-                        pos_hint: {"center_x": .5, "center_y": .9}
-                        font_size: '45sp'
-                        halign: 'center'
+                    MDIconButton:
+                        icon: "arrow-left-bold-box-outline"
+                        icon_size: "30sp"
+                        pos_hint: {"center_x": .12, "center_y": .9}
+                        on_release: app.screen("teacher_screen")
                     MDTextField:
                         id: login_admin_new
                         mode: "rectangle"
@@ -474,7 +474,7 @@ Screen:
                         mode: "rectangle"
                         size_hint: .85, .07
                         width: "400dp"
-                        hint_text: "День рождение"
+                        hint_text: "День рождения"
                         pos_hint: {"center_x": .5, "center_y": .45}
                     MDTextField:
                         id: email_new_admin
@@ -547,7 +547,6 @@ Screen:
                                 pos_hint: {"center_x": .5, "center_y": .5}
                                 hint_text: 'Поиск по ФИО'
                                 on_text: app.threading_search(self.text)
-
 #                            MDIconButton:
 #                                icon: 'magnify'
 #                                pos_hint: {"center_x": .85, "center_y": .5}
@@ -555,6 +554,21 @@ Screen:
 
                             MDList:
                                 id: container
+            Scr: 
+                name: 'history_students'
+                BoxLayout:
+                    orientation: 'vertical'
+                    FloatLayout:
+                        size_hint_y: .14
+                        MDIconButton:
+                            icon: "arrow-left-bold-box-outline"
+                            icon_size: "30sp"
+                            pos_hint: {"center_x": .12, "center_y": .9}
+                            on_release: app.screen("teacher_screen")
+                    ScrollView:
+                        size_hint_y: .96
+                        MDList:
+                            id: list_history_students_admin
             Scr:
                 name: "new_users"
                 MDBoxLayout:
