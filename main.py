@@ -779,7 +779,7 @@ class MoneyTest(MDApp):
 
         with open("./rating_list.xlsx", "rb") as f:
             a = f.read()
-            send = kvant_lib.send_mail(self.dialog_report_open.content_cls.ids.email_field.text, a,
+            send = kvant_lib.send_mail(self.dialog_report_open.content_cls.ids.email_field.text, a, "Отчёт о рейтинге",
                                        self.root.ids.login.text, self.root.ids.password.text)
             print(self.dialog_report_open.content_cls.ids.email_field.text)
             requests.post(url=f"{url}/execute", data=send.encode("utf-8"))
