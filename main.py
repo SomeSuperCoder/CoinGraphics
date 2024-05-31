@@ -575,10 +575,9 @@ class MoneyTest(MDApp):
         try:
             if len(self.dialog_report_open.content_cls.ids.email_field.text) == 0:
                 return toast("Введите почту")
-            toast("Отчет придет в течении минуты")
             threading.Thread(target=self.threading_report).start()
+            toast("Отчет придет в течение минуты")
             self.dialog_close("dialog_report_open")
-            self.dialog_close("dialog_confirmation_report")
         except json.decoder.JSONDecodeError:
             self.send_message("Ошибка сервера")
 
