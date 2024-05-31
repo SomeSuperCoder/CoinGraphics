@@ -671,7 +671,7 @@ class MoneyTest(MDApp):
                 self.send_message("Введены неверные данные")
                 self.root.ids.spinner_login_screen.active = False
         except json.decoder.JSONDecodeError:
-            self.send_message("Ошибка сервера")
+            self.send_message("Тех. перерыв")
             self.root.ids.spinner_login_screen.active = False
 
     @mainthread
