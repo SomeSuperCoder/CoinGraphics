@@ -54,6 +54,7 @@ class Item(OneLineAvatarIconListItem):
     right_text = StringProperty()
 
 
+
 class Tab(MDFloatLayout, MDTabsBase):
     '''Class implementing content for a tab.'''
 
@@ -65,8 +66,6 @@ class ContentNavigationDrawer(BoxLayout):
 
 class MenuHeader(MDBoxLayout):
     '''An instance of the class that will be added to the menu header.'''
-
-
 
 
 class SigInt:
@@ -102,7 +101,8 @@ class MoneyTest(MDApp):
     search_handle: threading.Thread = None
     search_sig_int = SigInt()
 
-    url = "https://kvantomat24.serveo.net"
+    def on_start(self):
+        self.screen("settings_admin")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
