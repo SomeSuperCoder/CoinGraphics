@@ -101,8 +101,8 @@ class MoneyTest(MDApp):
     search_handle: threading.Thread = None
     search_sig_int = SigInt()
 
-    def on_start(self):
-        self.screen("settings_admin")
+    # def on_start(self):
+    #     self.screen("settings_admin")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
