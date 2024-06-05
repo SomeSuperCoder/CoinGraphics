@@ -1,5 +1,5 @@
 .buildozer
-.ve
+.venv
 __pycache__
 .vscode
 bin

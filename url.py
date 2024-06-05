@@ -1,6 +1,6 @@
 import requests
 
-url = "https://kvantomat.serveo.net"
+url = "https://roughy-precious-neatly.ngrok-free.app"
 
 
 def met(new_url, urls):
