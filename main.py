@@ -1,3 +1,5 @@
+import time
+
 from kivymd.uix.tab import MDTabsBase
 from kivymd.uix.floatlayout import MDFloatLayout
 from kivy.core.window import Window
@@ -31,9 +33,12 @@ import hashlib
 import random
 import requests
 from url import url
-
+device = "android"
 if 'ANDROID_ARGUMENT' not in os.environ and 'ANDROID_PRIVATE' not in os.environ:
     Window.size = (520, 900)
+else:
+    device = "android"
+
 
 def get_account(login):
     result = json.loads(requests.get(f"{url}/get_account/{login}").text)
@@ -98,6 +103,7 @@ class MoneyTest(MDApp):
     text_search = ""
     path = ""
     balance = 0
+    thread_end = True
     search_handle: threading.Thread = None
     search_sig_int = SigInt()
 
@@ -252,7 +258,6 @@ class MoneyTest(MDApp):
 
     def notification(self):
         self.root.ids.notification_bell.icon = 'bell-ring'
-        
 
     def send_mail(self):
         if len(self.dialog_for_send.content_cls.ids.email_for_send.text) == 0:
@@ -281,7 +286,7 @@ class MoneyTest(MDApp):
         #     self.text_search = text
         #     return
 
-        if len(text) >= 4:
+        if len(text) > 2:
             self.clear_list("container")
             search_person = json.loads(requests.get(f"{url}/get_account_skeleton_list").text)
             LIST = search(search_person, text, self.search_sig_int)
@@ -338,27 +343,35 @@ class MoneyTest(MDApp):
                     Item(text="Сбросить пароль", on_release=lambda x=task_windows.text: self.dialog_windows_task(x)),
                     Item(text="Начислить", on_release=lambda x=task_windows.text: self.dialog_windows_task(x)),
                     Item(text="Списание", on_release=lambda x=task_windows.text: self.dialog_windows_task(x)),
-                    Item(text="История", on_release=lambda x: threading.Thread(target=self.history_threading, args=(task_windows.tertiary_text,)).start())
+                    Item(text="История", on_release=lambda x: threading.Thread(target=self.history_threading, args=(task_windows.tertiary_text, self.root.ids.list_history_students_admin,)).start())
                 ],
 
             )
             self.dialog_list.open()
             threading.Thread(target=self.balance_def, args=(self.id,)).start()
     
-    def history_threading(self, login):
+    def history_threading(self, login, list_id):
         print(login)
-        login = login.replace("ID: ", "")
-        account = get_account(login)
-        history = account["history"]
-        self.history_not_threading(history)
+        balance = 0
+        if type(login) == str:
+            self.dialog_close("dialog_list")
+            self.screen("history_students")
+            login = login.replace("ID: ", "")
+            account = get_account(login)
+            history = account["history"]
+        else:
+            login = login.text.replace("ID: ", "")
+            print(login)
+            account = get_account(login)
+            history = account["history"]
+            balance = account['balance']
+        self.history_not_threading(history, list_id, balance)
 
     @mainthread
-    def history_not_threading(self, history):
-        self.screen("history_students")
-        self.root.ids.list_history_students_admin.clear_widgets()
-        self.dialog_close("dialog_list")
+    def history_not_threading(self, history, list_id, balance):
+        list_id.clear_widgets()
         for i in reversed(history):
-            self.root.ids.list_history_students_admin.add_widget(
+            list_id.add_widget(
                 ThreeLineIconListItem(
                     IconLeftWidget(
                         icon="history"
@@ -367,7 +380,7 @@ class MoneyTest(MDApp):
                     secondary_text=f"{i['for_what']}",
                     tertiary_text=str(i['time'])
                 ))
-
+        self.root.ids.balance_user.text = f"{balance} Kvant"
 
 
     @mainthread
@@ -438,7 +451,7 @@ class MoneyTest(MDApp):
                         text="Отредактировать",
                         theme_text_color="Custom",
                         text_color=self.theme_cls.primary_color,
-                        on_release=lambda x: self.threading("settings_balance")
+                        on_release=lambda x: self.threading_examination_setting()
                     ),
                 ],
 
@@ -506,7 +519,6 @@ class MoneyTest(MDApp):
             self.dialog_change.content_cls.ids.first_field.hint_text = "Сколько"
             self.dialog_change.content_cls.ids.secondary_field.hint_text = "За что"
 
-
     def menu_callback(self, text_item):
         self.level = f"{text_item}"
         self.root.ids.drop_menu_position.text = f"{text_item}"
@@ -516,13 +528,26 @@ class MoneyTest(MDApp):
         self.theme_cls.primary_palette = "DeepPurple"
         return Builder.load_file("kivy.kv")
 
+    def threading_examination_setting(self):
+        if not self.thread_end:
+            print(self.thread_end)
+            return
+        self.thread_end = False
+        self.threading("settings_balance")
+
     def settings_balance(self):
         try:
             sum = int(self.dialog_change.content_cls.ids.first_field.text)
-            if len(self.dialog_change.content_cls.ids.secondary_field.text) < 8:
+            if len(self.dialog_change.content_cls.ids.secondary_field.text) < 4:
                 self.send_message("Введите за что")
+                self.thread_end = True
                 return
-            balance = self.balance_def(self.id)
+            if str(sum)[0] == '-':
+                self.send_message("Введите положительное число")
+                self.thread_end = True
+                return
+            balance = int(self.dialog_list.text.replace("Баланс: ", ""))
+            print(type(balance))
             print(self.id)
             id = self.id.replace("ID: ", "")
             print(self.dialog_change.title)
@@ -534,6 +559,7 @@ class MoneyTest(MDApp):
                     requests.post(url=f"{url}/execute", data=json.encode("utf-8"))
                     self.send_message("Списано")
                     self.dialog_close("dialog_change")
+
             elif self.dialog_change.title == "Начислить":
                 json = kvant_lib.change_balance(sum, id, self.dialog_change.content_cls.ids.secondary_field.text, self.root.ids.login.text, self.root.ids.password.text)
                 requests.post(url=f"{url}/execute", data=json.encode("utf-8"))
@@ -541,6 +567,9 @@ class MoneyTest(MDApp):
                 self.dialog_close("dialog_change")
         except ValueError:
             self.send_message("Введите сумму начисления")
+        self.thread_end = True
+        print("564", self.thread_end)
+
     def threading(self, fun):
         eval(f"threading.Thread(target=self.{fun}).start()")
 
@@ -582,23 +611,7 @@ class MoneyTest(MDApp):
             self.send_message("Ошибка сервера")
 
     def update(self):
-        login = self.root.ids.login.text
-        account = get_account(login)
-        history = account["history"]
-        self.root.ids.scroll_history.clear_widgets()
-        for i in reversed(history):
-            self.root.ids.scroll_history.add_widget(
-                ThreeLineIconListItem(
-                    IconLeftWidget(
-                        icon="history"
-                    ),
-                    text=str(i['sum']),
-                    secondary_text=f"{i['for_what']}",
-                    tertiary_text=str(i['time'])
-                ))
-
-
-        self.root.ids.balance_user.text = f"{self.balance_def(login)} Kvant"
+        threading.Thread(target=self.history_threading, args=(self.root.ids.login, self.root.ids.scroll_history,)).start()
 
     def registration(self):
             login = self.root.ids.login_admin_new.text
@@ -687,7 +700,6 @@ class MoneyTest(MDApp):
         family = dict(enumerate(fullname.split(" "))).get(0) or fullname
         dad = dict(enumerate(fullname.split(" "))).get(2) or fullname
         toast("Вы вошли")
-
         if len(login) == 5:
             self.id = login
             self.password = password
@@ -749,6 +761,7 @@ class MoneyTest(MDApp):
             self.root.ids.id_teacher_screen.text = id_
             self.root.ids.birthday_teacher_screen.text = birthdate
         elif len(login) == 7:
+            self.root.ids.platform_device.text = device
             self.root.ids.screen_manager.current = "teacher_screen"
             self.root.ids.admin_name.text = account["name"]
             self.root.ids.name_teacher_screen.text = "Администрация"
@@ -758,6 +771,7 @@ class MoneyTest(MDApp):
             self.dialog_settings_accounts()
         self.root.ids.spinner_login_screen.active = False
 
+    @mainthread
     def screen(self, screen_name):
         self.root.ids.screen_manager.current = screen_name
 

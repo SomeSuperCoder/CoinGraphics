@@ -418,7 +418,7 @@ Screen:
                                         icon: "account-plus"
                                 OneLineAvatarListItem:
                                     text: "Создать отчет"
-                                    on_release: app.dialog_report()
+                                    on_release: app.send_message("На вашем устройстве не доступно") if platform_device.text == 'android' else app.dialog_report()
                                     IconLeftWidget:
                                         icon: "table"
                                 OneLineAvatarListItem:
@@ -603,6 +603,11 @@ Screen:
                     ScrollView:
                         MDBoxLayout:
                             id: generate_table
+            MDScreen:
+                name: "screen_admin"
+                MDLabel:
+                    id: platform_device
+                    text: ""
         MDNavigationDrawer:
             id: nav_drawer
             anchor: "right"

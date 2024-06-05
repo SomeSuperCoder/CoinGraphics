@@ -7,7 +7,7 @@ title = Kvantomat
 package.name = kvantapplication
 
 # (str) Package domain (needed for android/ios packaging)
-package.domain = org.test
+package.domain = org.kvant
 
 # (str) Source code where the main.py live
 source.dir = .
