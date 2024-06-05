@@ -33,7 +33,8 @@ import hashlib
 import random
 import requests
 from url import url
-device = "android"
+device = "windows"
+
 if 'ANDROID_ARGUMENT' not in os.environ and 'ANDROID_PRIVATE' not in os.environ:
     Window.size = (520, 900)
 else:
