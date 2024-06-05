@@ -412,13 +412,13 @@ Screen:
                             MDList:
                                 scroll_y: None
                                 OneLineAvatarListItem:
-                                    on_release: app.screen("settingsadmin")
+                                    on_release: app.screen("settings_admin")
                                     text: "Добавление аккаунта"
                                     IconLeftWidget:
                                         icon: "account-plus"
                                 OneLineAvatarListItem:
                                     text: "Создать отчет"
-                                    on_release: app.dialog_report()
+                                    on_release: app.send_message("На вашем устройстве не доступно") if platform_device.text == 'android' else app.dialog_report()
                                     IconLeftWidget:
                                         icon: "table"
                                 OneLineAvatarListItem:
@@ -437,12 +437,12 @@ Screen:
                             pos_hint: {"center_x": .5, "center_y": .12}
                             on_release: app.screen('login_screen')
             Scr:
-                name:  "settingsadmin"
+                name:  "settings_admin"
                 MDFloatLayout:
                     MDIconButton:
                         icon: "arrow-left-bold-box-outline"
-                        icon_size: "30sp"
-                        pos_hint: {"center_x": .12, "center_y": .9}
+                        icon_size: "40sp"
+                        pos_hint: {"center_x": .1, "center_y": .9}
                         on_release: app.screen("teacher_screen")
                     MDTextField:
                         id: login_admin_new
@@ -450,39 +450,35 @@ Screen:
                         size_hint: .85, .07
                         width: "400dp"
                         hint_text: "Логин"
-                        pos_hint: {"center_x": .5, "center_y": .75}
-                    MDIconButton:
-                        icon: "scr/repeat.png"
-                        on_release: app.generate()
-                        pos_hint: {"center_x": .88, "center_y": .75}
+                        pos_hint: {"center_x": .5, "center_y": .80}
                     MDTextField:
                         id: password_admin_new
                         mode: "rectangle"
                         size_hint: .85, .07
                         width: "400dp"
                         hint_text: "Пароль"
-                        pos_hint: {"center_x": .5, "center_y": .65}
+                        pos_hint: {"center_x": .5, "center_y": .68}
                     MDTextField:
                         id: name_admin_new
                         mode: "rectangle"
                         size_hint: .85, .07
                         width: "400dp"
                         hint_text: "ФИО"
-                        pos_hint: {"center_x": .5, "center_y": .55}
+                        pos_hint: {"center_x": .5, "center_y": .56}
                     MDTextField:
                         id: birthday_admin_new
                         mode: "rectangle"
                         size_hint: .85, .07
                         width: "400dp"
                         hint_text: "День рождения"
-                        pos_hint: {"center_x": .5, "center_y": .45}
+                        pos_hint: {"center_x": .5, "center_y": .44}
                     MDTextField:
                         id: email_new_admin
                         mode: "rectangle"
                         size_hint: .85, .07
                         width: "400dp"
                         hint_text: "Почта"
-                        pos_hint: {"center_x": .5, "center_y": .35}
+                        pos_hint: {"center_x": .5, "center_y": .32}
                     MDRaisedButton:
                         text: "Создать"
                         text_size: "39sp"
@@ -559,14 +555,14 @@ Screen:
                 BoxLayout:
                     orientation: 'vertical'
                     FloatLayout:
-                        size_hint_y: .14
+                        size_hint_y: .05
                         MDIconButton:
                             icon: "arrow-left-bold-box-outline"
-                            icon_size: "30sp"
-                            pos_hint: {"center_x": .12, "center_y": .9}
+                            icon_size: "45sp"
+                            pos_hint: {"center_x": .12, "center_y": .1}
                             on_release: app.screen("teacher_screen")
                     ScrollView:
-                        size_hint_y: .96
+                        size_hint_y: .95
                         MDList:
                             id: list_history_students_admin
             Scr:
@@ -607,6 +603,11 @@ Screen:
                     ScrollView:
                         MDBoxLayout:
                             id: generate_table
+            MDScreen:
+                name: "screen_admin"
+                MDLabel:
+                    id: platform_device
+                    text: ""
         MDNavigationDrawer:
             id: nav_drawer
             anchor: "right"
