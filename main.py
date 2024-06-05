@@ -776,8 +776,8 @@ class MoneyTest(MDApp):
     def screen(self, screen_name):
         self.root.ids.screen_manager.current = screen_name
 
-        a = json.loads(requests.get(f"{url}/get_raiting_skeleton").text)
     def threading_report(self):
+        a = json.loads(requests.get(f"{url}/get_raiting_skeleton").text)
         sorted_dict = dict(sorted(a.items(), key=lambda item: item[1], reverse=True))
         name_list = []
         rating_list = []
