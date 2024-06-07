@@ -60,7 +60,6 @@ class Item(OneLineAvatarIconListItem):
     right_text = StringProperty()
 
 
-
 class Tab(MDFloatLayout, MDTabsBase):
     '''Class implementing content for a tab.'''
 
@@ -108,8 +107,8 @@ class MoneyTest(MDApp):
     search_handle: threading.Thread = None
     search_sig_int = SigInt()
 
-    # def on_start(self):
-    #     self.screen("settings_admin")
+    def on_start(self):
+        print(json.loads(requests.get(f"{url}/get_account_skeleton_list").text))
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -350,17 +349,19 @@ class MoneyTest(MDApp):
             )
             self.dialog_list.open()
             threading.Thread(target=self.balance_def, args=(self.id,)).start()
-    
+
     def history_threading(self, login, list_id):
         print(login)
         balance = 0
         if type(login) == str:
+            self.root.ids.spinner_history_accruals.active = True
             self.dialog_close("dialog_list")
             self.screen("history_students")
             login = login.replace("ID: ", "")
             account = get_account(login)
             history = account["history"]
         else:
+            self.root.ids.spinner_history_accruals.active = True
             login = login.text.replace("ID: ", "")
             print(login)
             account = get_account(login)
@@ -382,7 +383,8 @@ class MoneyTest(MDApp):
                     tertiary_text=str(i['time'])
                 ))
         self.root.ids.balance_user.text = f"{balance} Kvant"
-
+        self.root.ids.spinner_history_accruals.active = False
+        self.root.ids.spinner_history_student.active = False
 
     @mainthread
     def dialog_close(self, a):
@@ -680,6 +682,8 @@ class MoneyTest(MDApp):
             check = json.loads(check)
             if check:
                 account = get_account(login)
+                if len(login) == 5:
+                    time.sleep(2)
                 self.login_interface(login, password, account)
             else:
                 self.send_message("Введены неверные данные")
@@ -706,16 +710,17 @@ class MoneyTest(MDApp):
             self.password = password
             self.root.ids.screen_manager.current = "main_screen"
             print(history)
+            self.history_not_threading(history, self.root.ids.scroll_history, balance)
             self.root.ids.balance_user.text = f"{balance} Kvant"
             self.root.ids.name_profile_main.text = f"{family} {name} \n{dad}"
             self.root.ids.name_main_screen.text = f"{name} >"
             charge_contests = MDDataTable(
                 column_data=[
-                    ("Уровни", dp(40)),
-                    ("1 место", dp(15)),
-                    ("2 место", dp(15)),
-                    ("3 место", dp(15)),
-                    ("Участие", dp(15)),
+                    ("Уровни", dp(38)),
+                    ("1 место", dp(14)),
+                    ("2 место", dp(14)),
+                    ("3 место", dp(14)),
+                    ("Участие", dp(14)),
                 ],
                 row_data=[
                     (
@@ -825,6 +830,25 @@ class MoneyTest(MDApp):
         requests.post(url=f"{url}/execute", data=json.encode("utf-8"))
         self.dialog_close("dialog_confirmation_report")
         print("Конец")
+
+    def group_teacher(self):
+        self.screen("groups_list")
+        children = json.loads(requests.get(f"{url}/get_account_skeleton_list").text)
+        for key, item in children.items():
+            if item.get("creator") == self.root.ids.login.text:
+                self.row_students(item.get("name"), item.get("id"), item.get('birthdate'))
+
+    @mainthread
+    def row_students(self, name, id_students, birthdate):
+        self.root.ids.my_list_students.add_widget(
+            ThreeLineIconListItem(
+                text=name,
+                secondary_text=birthdate,
+                tertiary_text=f"ID: {id_students}",
+                on_release=lambda x: self.dialog_windows(x)
+            ),
+        )
+
 
 if __name__ == "__main__":
     MoneyTest().run()

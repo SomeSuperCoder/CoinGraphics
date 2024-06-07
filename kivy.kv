@@ -113,6 +113,12 @@ Screen:
                             active: False
             MDScreen:
                 name: 'main_screen'
+                MDSpinner:
+                    id: spinner_history_student
+                    size_hint: None, None
+                    size: dp(48), dp(48)
+                    active: True
+                    pos_hint: {'center_x': .5, 'center_y': .25}
                 FitImage:
                     source: 'scr/background2.jpg'
                     size_hint_y: .5
@@ -397,7 +403,7 @@ Screen:
                             font_style: "Button"
                             size_hint_y: None
                             halign: "center"
-                            font_size: "30sp"
+                            font_size: "30dp" if platform_device.text == 'windows' else "25sp"
                             pos_hint: {"center_x": .5, "center_y": .74}
                             id: admin_name
                         MDLabel:
@@ -529,29 +535,39 @@ Screen:
                         padding: dp(20)
                         MDFloatLayout:
                             adaptive_height: True
-                            MDIconButton:
-                                icon_size: '25sp'
+                            MDFillRoundFlatIconButton:
                                 md_bg_color: "#222126"
+                                icon_size: '25sp'
                                 icon_color: "#ffffff"
+                                text: "Админ панель" if id_teacher_screen.text == 'admin' else 'Добавление учеников'
                                 icon: "account-star-outline" if id_teacher_screen.text == 'admin' else 'account-plus'
-                                pos_hint: {"center_x": .97, "center_y": .5}
+                                pos_hint: {"center_x": .65, "center_y": .8}
                                 on_release:  app.screen("admin_screen") if id_teacher_screen.text == 'admin' else app.screen("new_users")
                             MDTextField:
                                 id: search_students
                                 mode: "round"
                                 size_hint: (.7, 0.5 )if platform_device.text == 'windows' else (.7, 1.2)
-                                pos_hint: {"center_x": .5, "center_y": .5}
+                                pos_hint: {"center_x": .5, "center_y": .2}
                                 hint_text: 'Поиск по ФИО'
                                 on_text: app.threading_search(self.text)
-#                            MDIconButton:
-#                                icon: 'magnify'
-#                                pos_hint: {"center_x": .85, "center_y": .5}
+                            MDFillRoundFlatIconButton:
+                                icon_size: '25sp'
+                                md_bg_color: "#222126"
+                                icon_color: "#ffffff"
+                                text: 'Группы  '
+                                icon: 'account-group'
+                                pos_hint: {"center_x": .35, "center_y": .8}
+                                on_release: app.threading("group_teacher")
                         MDScrollView:
-
                             MDList:
                                 id: container
             Scr: 
                 name: 'history_students'
+                MDSpinner:
+                    id: spinner_history_accruals
+                    size_hint: None, None
+                    size: dp(55), dp(55)
+                    pos_hint: {'center_x': .5, 'center_y': .5}
                 BoxLayout:
                     orientation: 'vertical'
                     FloatLayout:
@@ -608,6 +624,21 @@ Screen:
                 MDLabel:
                     id: platform_device
                     text: ""
+            MDScreen:
+                name: 'groups_list'
+                MDBoxLayout:
+                    orientation: "vertical"
+
+                    MDTopAppBar:
+                        title: "Назад"
+                        left_action_items: [["arrow-left", lambda x: app.screen("teacher_screen")]]
+                    MDTabs:
+                        Tab:
+                            title: "Мои ученики"
+                            ScrollView:
+                                MDList:
+                                    id: my_list_students
+
         MDNavigationDrawer:
             id: nav_drawer
             anchor: "right"
