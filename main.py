@@ -7,6 +7,7 @@ from search import search
 from kivymd.uix.list import IconLeftWidget
 import pandas
 import os
+import crossfiledialog
 
 import random
 from kivy.clock import mainthread
@@ -25,7 +26,7 @@ from kivymd.uix.button import MDFlatButton
 from kivymd.uix.dialog import MDDialog
 from kivymd.app import MDApp
 from kivymd.uix.boxlayout import MDBoxLayout
-from kivymd.uix.list import ThreeLineIconListItem
+from kivymd.uix.list import ThreeLineIconListItem, TwoLineIconListItem
 from kivymd.uix.list import OneLineAvatarIconListItem
 from kivymd.toast import toast
 from kivy.uix.boxlayout import BoxLayout
@@ -33,6 +34,11 @@ import hashlib
 import random
 import requests
 from url import url
+
+from pathlib import Path
+
+home_dir = str(Path.home())
+
 device = "windows"
 
 if 'ANDROID_ARGUMENT' not in os.environ and 'ANDROID_PRIVATE' not in os.environ:
@@ -106,40 +112,50 @@ class MoneyTest(MDApp):
     thread_end = True
     search_handle: threading.Thread = None
     search_sig_int = SigInt()
+    id_object_remove = ""
+    children = None
+    filename = None
+    sig_stop_all = False
+    try:
+        children = json.loads(requests.get(f"{url}/get_account_skeleton_list").text)
+    except json.decoder.JSONDecodeError:
+        print("The Server is not responding")
+
+    def update_list(self):
+        while True:
+            if self.sig_stop_all:
+                break
+            time.sleep(3)
+            try:
+                self.children = json.loads(requests.get(f"{url}/get_account_skeleton_list").text)
+            except json.decoder.JSONDecodeError:
+                print("The Server is not responding")
 
     def on_start(self):
-        print(json.loads(requests.get(f"{url}/get_account_skeleton_list").text))
+        self.handle = threading.Thread(target=self.update_list).start()
+
+    def on_stop(self):
+        self.sig_stop_all = True
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        Window.bind(on_keyboard=self.events)
-        self.manager_open = False
-        self.file_manager = MDFileManager(
-            exit_manager=self.exit_manager,
-            select_path=self.select_path,
-            preview=True
-        )
-        self.file_manager.ext = [".xlsx"]
+        # Window.bind(on_keyboard=self.events)
         self.fg = None
         self.elevation = 0
 
     def manager_file_exel_open(self):
-        PATH = "/"
-        self.file_manager.show(PATH)  # output manager to the screen
-        self.manager_open = True
+        self.filename = crossfiledialog.open_file(start_dir=home_dir, filter="*.xlsx")
+        if not self.filename:
+            toast("Вы не выбрали файл")
+            return
+        self.root.ids.generate_table.clear_widgets()
+        threading.Thread(target=self.excel_read).start()
 
     def generate(self):
         while True:
             value = random.randint(10_000, 99_999)
             if not get_account(value):
                 return value
-
-    def select_path(self, path):
-        self.exit_manager()
-        self.root.ids.generate_table.clear_widgets()
-        print(path)
-        self.path = path
-        threading.Thread(target=self.excel_read).start()
 
     @mainthread
     def loading_windows(self, i, data):
@@ -156,8 +172,8 @@ class MoneyTest(MDApp):
 
     def excel_read(self):
         try:
-            print(self.path)
-            df = pandas.read_excel(f'{self.path}')
+            print(self.filename)
+            df = pandas.read_excel(f'{self.filename}')
             birthday = df['Дата рождения']
             name = df['ФИО']
             generates = self.generate()
@@ -227,17 +243,10 @@ class MoneyTest(MDApp):
         self.root.ids.generate_table.add_widget(self.charge_contests)
         toast(f"{self.path}")
         self.root.ids.boxlayout_download.pos_hint = ({"center_x": .3, "center_y": .1})
-        self.fg = MDRaisedButton(
-            id="rr",
-            text='Создать пользователей',
-            pos_hint=({"center_x": .7, "center_y": .1}),
-            on_release=lambda x: self.threading('create_users_sql')
-
-        )
-        self.root.ids.boxlayout.add_widget(self.fg)
+        self.root.ids.action_send_message.text = "create"
 
     def create_users_sql(self):
-        self.dialog_email_send()
+        self.dialog_email_send("list_user.xlsx")
 
         for i in range(len(self.charge_contests.row_data)):
             if self.charge_contests.row_data[i][3] == "Уже есть":
@@ -246,24 +255,14 @@ class MoneyTest(MDApp):
                 json = kvant_lib.create_user(self.charge_contests.row_data[i][0], self.charge_contests.row_data[i][1], self.charge_contests.row_data[i][2], "12345678", self.root.ids.login.text, self.root.ids.password.text)
                 requests.post(url=f"{url}/execute", data=json.encode("utf-8"))
 
-    def exit_manager(self, *args):
-        self.manager_open = False
-        self.file_manager.close()
-
-    def events(self, instance, keyboard, keycode, text, modifiers):
-        if keyboard in (1001, 27):
-            if self.manager_open:
-                self.file_manager.back()
-        return True
-
     def notification(self):
         self.root.ids.notification_bell.icon = 'bell-ring'
 
-    def send_mail(self):
+    def send_mail(self, file_name: str):
         if len(self.dialog_for_send.content_cls.ids.email_for_send.text) == 0:
             toast("Введите почту")
         else:
-            with open("./list_user.xlsx", "rb") as f:
+            with open(file_name, "rb") as f:
                 a = f.read()
                 json = kvant_lib.send_mail(self.dialog_for_send.content_cls.ids.email_for_send.text, a, "Список учеников", self.root.ids.login.text, self.root.ids.password.text)
                 requests.post(url=f"{url}/execute", data=json.encode("utf-8"))
@@ -313,7 +312,7 @@ class MoneyTest(MDApp):
                 text=puple['name'],
                 secondary_text=puple['birthdate'],
                 tertiary_text=f"ID: {puple['id']}",
-                on_release=lambda x: self.dialog_windows(x)
+                on_release=lambda x: self.dialog_windows(x, "teacher_screen")
             ),
         )
 
@@ -324,12 +323,13 @@ class MoneyTest(MDApp):
             self.dialog_list.text = f'Баланс: {balance}'
         return balance
 
-    def dialog_windows(self, task_windows):
+    def dialog_windows(self, task_windows, screen):
         print(task_windows.text, task_windows.secondary_text)
         self.name = task_windows.text
         self.birthday = task_windows.secondary_text
         self.id = task_windows.tertiary_text
-        
+        print(screen)
+        self.root.ids.button_back_group.on_release = lambda: self.screen(screen)
         if self.dialog_list:
             self.dialog_list = None
         if not self.dialog_list:
@@ -339,8 +339,8 @@ class MoneyTest(MDApp):
                 type="simple",
                 radius=[20, 7, 20, 7],
                 items=[
-                    Item(text="Удалить", on_release=lambda x=task_windows.text: self.dialog_windows_task(x)),
-                    Item(text="Сбросить пароль", on_release=lambda x=task_windows.text: self.dialog_windows_task(x)),
+                    Item(text="Удалить", on_release=lambda x=task_windows.text: self.send_message("У вас нет доступа") if screen == "screen_students_teachers" else self.dialog_windows_task(x)),
+                    Item(text="Сбросить пароль", on_release=lambda x=task_windows.text: self.send_message("У вас нет доступа") if screen == "screen_students_teachers" else (lambda x=task_windows.text: self.dialog_windows_task(x))),
                     Item(text="Начислить", on_release=lambda x=task_windows.text: self.dialog_windows_task(x)),
                     Item(text="Списание", on_release=lambda x=task_windows.text: self.dialog_windows_task(x)),
                     Item(text="История", on_release=lambda x: threading.Thread(target=self.history_threading, args=(task_windows.tertiary_text, self.root.ids.list_history_students_admin,)).start())
@@ -391,13 +391,13 @@ class MoneyTest(MDApp):
         eval(f"self.{a}.dismiss()")
 
     @mainthread
-    def dialog_email_send(self):
+    def dialog_email_send(self, file_name: str):
         if not self.dialog_for_send:
             self.dialog_for_send = MDDialog(
                 radius=[20, 7, 20, 7],
-                title="Введите почту для отправки копии списков",
+                title="Введите почту",
                 type="custom",
-                auto_dismiss=False,
+                auto_dismiss=True if file_name == "template.xlsx" else False,
                 content_cls=MDBoxLayout(
                     MDTextField(
                         id="email_for_send",
@@ -412,7 +412,7 @@ class MoneyTest(MDApp):
                     MDFlatButton(
                         text="Отправить",
                         text_color=self.theme_cls.primary_color,
-                        on_release=lambda x: self.send_mail()
+                        on_release=lambda x: self.send_mail(file_name)
                     ),
                 ],
 
@@ -490,12 +490,16 @@ class MoneyTest(MDApp):
         if self.dialog_confirmation.text == "Все данные о пользователе будут стерты безвозратно":
             json = kvant_lib.delete_user(id, self.root.ids.login.text, self.root.ids.password.text)
             requests.post(url=f"{url}/execute", data=json.encode("utf-8"))
+            print(self.id_object_remove)
+            print(self.root.ids.my_list_students)
             self.send_message("Аккаунт удален")
         else:
             json = kvant_lib.change_password(id, "12345678",self.root.ids.login.text, self.root.ids.password.text)
             requests.post(url=f"{url}/execute", data=json.encode("utf-8"))
             self.send_message("Пароль сброшен")
         self.threading_action("self.root.ids.container.clear_widgets()")
+        self.threading_action("self.root.ids.list_students_other_teachers.clear_widgets()")
+        self.threading_action("self.root.ids.my_list_students.clear_widgets()")
 
     @mainthread
     def threading_action(self, action):
@@ -541,10 +545,6 @@ class MoneyTest(MDApp):
     def settings_balance(self):
         try:
             sum = int(self.dialog_change.content_cls.ids.first_field.text)
-            if len(self.dialog_change.content_cls.ids.secondary_field.text) < 4:
-                self.send_message("Введите за что")
-                self.thread_end = True
-                return
             if str(sum)[0] == '-':
                 self.send_message("Введите положительное число")
                 self.thread_end = True
@@ -626,7 +626,6 @@ class MoneyTest(MDApp):
             for i in (login, password, name, birthday, email):
                 if not len(i):
                     toast("Вы заполнили не все поля")
-
                     return
             
             if get_account(login):
@@ -765,6 +764,7 @@ class MoneyTest(MDApp):
             self.root.ids.screen_manager.current = "teacher_screen"
             self.root.ids.name_teacher_screen.text = name
             self.root.ids.id_teacher_screen.text = id_
+            self.root.ids.platform_device.text = device
             self.root.ids.birthday_teacher_screen.text = birthdate
         elif len(login) == 7:
             self.root.ids.platform_device.text = device
@@ -780,6 +780,7 @@ class MoneyTest(MDApp):
     @mainthread
     def screen(self, screen_name):
         self.root.ids.screen_manager.current = screen_name
+        self.screen_open = screen_name
 
     def threading_report(self):
         a = json.loads(requests.get(f"{url}/get_raiting_skeleton").text)
@@ -831,21 +832,49 @@ class MoneyTest(MDApp):
         self.dialog_close("dialog_confirmation_report")
         print("Конец")
 
-    def group_teacher(self):
+    def group_teachers(self):
         self.screen("groups_list")
-        children = json.loads(requests.get(f"{url}/get_account_skeleton_list").text)
-        for key, item in children.items():
+        self.threading_action("self.root.ids.my_list_students.clear_widgets()")
+        self.threading_action("self.root.ids.list_teachers.clear_widgets()")
+        self.root.ids.spinner_my_students.active = True
+        self.root.ids.spinner_teachers.active = True
+        for key, item in self.children.items():
             if item.get("creator") == self.root.ids.login.text:
-                self.row_students(item.get("name"), item.get("id"), item.get('birthdate'))
+                self.row_students(item.get("name"), item.get("id"), item.get('birthdate'), self.root.ids.my_list_students, "groups_list")
+            if len(key) == 6:
+                self.list_teachers(item.get("name"), item.get("id"))
+        self.root.ids.spinner_my_students.active = False
+        self.root.ids.spinner_teachers.active = False
 
     @mainthread
-    def row_students(self, name, id_students, birthdate):
-        self.root.ids.my_list_students.add_widget(
+    def list_teachers(self, name, id_user):
+        self.root.ids.list_teachers.add_widget(
+            TwoLineIconListItem(
+                text=name,
+                secondary_text=f"ID: {id_user}",
+                on_release=lambda x: threading.Thread(target=self.showing_other_students, args=(x,)).start()
+            ),
+        )
+
+    def showing_other_students(self, x):
+        id_name = x.secondary_text.replace("ID: ", "")
+        self.screen("screen_students_teachers")
+        self.threading_action("self.root.ids.list_students_other_teachers.clear_widgets()")
+        self.root.ids.spinner_students_teacher.active = True
+        print("adadadad")
+        for key, item in self.children.items():
+            if item.get("creator") == id_name:
+                self.row_students(item.get("name"), item.get("id"), item.get('birthdate'), self.root.ids.list_students_other_teachers, "screen_students_teachers")
+        self.root.ids.spinner_students_teacher.active = False
+
+    @mainthread
+    def row_students(self, name, id_students, birthdate, id_list, screen):
+        id_list.add_widget(
             ThreeLineIconListItem(
                 text=name,
                 secondary_text=birthdate,
                 tertiary_text=f"ID: {id_students}",
-                on_release=lambda x: self.dialog_windows(x)
+                on_release=lambda x: self.dialog_windows(x, screen)
             ),
         )
 
