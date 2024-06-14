@@ -533,31 +533,32 @@ Screen:
                         spacing: dp(10)
                         padding: dp(20)
                         MDFloatLayout:
-                            adaptive_height: True
+                            size_hint: 1, .2
                             MDFillRoundFlatIconButton:
                                 md_bg_color: "#222126"
                                 icon_size: '25sp'
                                 icon_color: "#ffffff"
                                 text: "Админ панель" if id_teacher_screen.text == 'admin' else 'Создать учеников'
                                 icon: "account-star-outline" if id_teacher_screen.text == 'admin' else 'account-plus'
-                                pos_hint: {"center_x": .65, "center_y": .8}
+                                pos_hint: {"center_x": .65, "center_y": .8} if platform_device.text == "windows" else {"center_x": .67, "center_y": .8}
                                 on_release:  app.screen("admin_screen") if id_teacher_screen.text == 'admin' else app.screen("new_users")
                             MDTextField:
                                 id: search_students
                                 mode: "round"
                                 size_hint: (.7, 0.5 ) if platform_device.text == 'windows' else (.7, 1.2)
-                                pos_hint: {"center_x": .5, "center_y": .2}
+                                pos_hint: {"center_x": .5, "center_y": .2} if platform_device.text == "windows" else {"center_x": .5, "center_y": .1}
                                 hint_text: 'Поиск по ФИО'
                                 on_text: app.threading_search(self.text)
                             MDFillRoundFlatIconButton:
                                 icon_size: '25sp'
                                 md_bg_color: "#222126"
                                 icon_color: "#ffffff"
-                                text: 'Группы  '
+                                text: 'Группы'
                                 icon: 'account-group'
-                                pos_hint: {"center_x": .35, "center_y": .8} if id_teacher_screen.text == 'admin' else {"center_x": .27, "center_y": .8}
+                                pos_hint: {"center_x": .33, "center_y": .8} if platform_device.text == "windows" else {"center_x": .23, "center_y": .8}
                                 on_release: app.threading("group_teachers")
                         MDScrollView:
+                            size_hint: 1, .8
                             MDList:
                                 id: container
             Scr: 

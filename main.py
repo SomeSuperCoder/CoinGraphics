@@ -7,7 +7,6 @@ from search import search
 from kivymd.uix.list import IconLeftWidget
 import pandas
 import os
-import crossfiledialog
 
 import random
 from kivy.clock import mainthread
@@ -133,7 +132,6 @@ class MoneyTest(MDApp):
 
     def on_start(self):
         self.handle = threading.Thread(target=self.update_list).start()
-
     def on_stop(self):
         self.sig_stop_all = True
 
@@ -144,6 +142,7 @@ class MoneyTest(MDApp):
         self.elevation = 0
 
     def manager_file_exel_open(self):
+        import crossfiledialog
         self.filename = crossfiledialog.open_file(start_dir=home_dir, filter="*.xlsx")
         if not self.filename:
             toast("Вы не выбрали файл")
