@@ -37,7 +37,7 @@ version = 0.1
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy,kivymd==1.2.0,requests,pandas,openpyxl,crossfiledialog
+requirements = python3,kivy,kivymd==1.2.0,requests,pandas,openpyxl,crossfiledialog,appdirs,packaging,SDL2_image
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes

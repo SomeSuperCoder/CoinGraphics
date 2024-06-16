@@ -541,12 +541,12 @@ Screen:
                                 text: "Админ панель" if id_teacher_screen.text == 'admin' else 'Создать учеников'
                                 icon: "account-star-outline" if id_teacher_screen.text == 'admin' else 'account-plus'
                                 pos_hint: {"center_x": .65, "center_y": .8} if platform_device.text == "windows" else {"center_x": .67, "center_y": .8}
-                                on_release:  app.screen("admin_screen") if id_teacher_screen.text == 'admin' else app.screen("new_users")
+                                on_release:  app.screen("admin_screen") if id_teacher_screen.text == 'admin' else (app.screen("new_users") if platform_device.text == "windows" else app.screen("unavailable"))
                             MDTextField:
                                 id: search_students
                                 mode: "round"
-                                size_hint: (.7, 0.5 ) if platform_device.text == 'windows' else (.7, 1.2)
-                                pos_hint: {"center_x": .5, "center_y": .2} if platform_device.text == "windows" else {"center_x": .5, "center_y": .1}
+                                size_hint: (.7, 0.5 ) if platform_device.text == 'windows' else (.7, 0.32)
+                                pos_hint: {"center_x": .5, "center_y": .3} if platform_device.text == "windows" else {"center_x": .5, "center_y": .3}
                                 hint_text: 'Поиск по ФИО'
                                 on_text: app.threading_search(self.text)
                             MDFillRoundFlatIconButton:
@@ -582,6 +582,7 @@ Screen:
                             id: list_history_students_admin
             Scr:
                 name: "new_users"
+
                 MDBoxLayout:
                     orientation: 'vertical'
                     MDFloatLayout:
@@ -601,7 +602,7 @@ Screen:
                             id: boxlayout_download
                             text: 'Загрузите Excel файл'
                             pos_hint: {"center_x": .3, "center_y": .15}
-                            on_release: app.manager_file_exel_open()
+                            on_release: app.manager_file_exel_open() if platform_device.text == "windows" else app.send_message("Не доступно на вашем устройстве")
                         MDRaisedButton:
                             id: send_template
                             text: "Создать учеников" if action_send_message.text == "create" else'Получить шаблон'
@@ -643,6 +644,10 @@ Screen:
                                 size_hint: None, None
                                 size: dp(75), dp(75)
                                 pos_hint: {"center_x": .5, "center_y": .5}
+                            MDRaisedButton:
+                                text: "Начислить всем"
+                                pos_hint: {"center_x": .75, "center_y": 1.2}
+                                on_release: app.give_to_all_dialog('mine')
                             ScrollView:
                                 MDList:
                                     id: my_list_students
@@ -671,10 +676,16 @@ Screen:
                         MDBackButton:
                             pos_hint: {"center_x": .1, "center_y": .5}
                             on_release: app.screen("groups_list")
+                        MDRaisedButton:
+                            text: "Начислить всем"
+                            pos_hint: {"center_x": .75, "center_y": .5}
+                            on_release: app.give_to_all_dialog('')
                     MDScrollView:
                         size_hint: 1, .92
                         MDList:
                             id: list_students_other_teachers
+            MDScreen:
+                name: "unavailable"
             MDScreen:
                 name: "screen_admin"
                 MDLabel:

@@ -92,6 +92,7 @@ class MoneyTest(MDApp):
     dialog_list = None
     dialog_change = None
     dialog_lan = None
+    dialog_accrual = None
     dialog_confirmation = None
     dialog_settings_account = None
     dialog_confirmation_report = None
@@ -115,23 +116,25 @@ class MoneyTest(MDApp):
     children = None
     filename = None
     sig_stop_all = False
-    try:
-        children = json.loads(requests.get(f"{url}/get_account_skeleton_list").text)
-    except json.decoder.JSONDecodeError:
-        print("The Server is not responding")
+    id_teacher = ""
+    # try:
+    #     children = json.loads(requests.get(f"{url}/get_account_skeleton_list").text)
+    # except json.decoder.JSONDecodeError:
+    #     print("The Server is not responding")
 
-    def update_list(self):
-        while True:
-            if self.sig_stop_all:
-                break
-            time.sleep(3)
-            try:
-                self.children = json.loads(requests.get(f"{url}/get_account_skeleton_list").text)
-            except json.decoder.JSONDecodeError:
-                print("The Server is not responding")
+    # def update_list(self):
+    #     while True:
+    #         if self.sig_stop_all:
+    #             break
+    #         time.sleep(3.5)
+    #         try:
+    #             self.children = json.loads(requests.get(f"{url}/get_account_skeleton_list").text)
+    #         except json.decoder.JSONDecodeError:
+    #             print("The Server is not responding")
 
-    def on_start(self):
-        self.handle = threading.Thread(target=self.update_list).start()
+    # def on_start(self):
+    #     self.handle = threading.Thread(target=self.update_list).start()
+
     def on_stop(self):
         self.sig_stop_all = True
 
@@ -147,7 +150,7 @@ class MoneyTest(MDApp):
         if not self.filename:
             toast("Вы не выбрали файл")
             return
-        self.root.ids.generate_table.clear_widgets()
+        self.clear_list(self.root.ids.list_students_other_teachers)
         threading.Thread(target=self.excel_read).start()
 
     def generate(self):
@@ -273,7 +276,7 @@ class MoneyTest(MDApp):
             self.search_sig_int.set(True)
             self.search_handle.join()
             self.search_sig_int.set(False)
-            self.clear_list("container")
+            self.clear_list(self.root.ids.container)
 
         self.search_handle = threading.Thread(target=self.search_students,args=(text,))
         self.search_handle.start()
@@ -285,7 +288,7 @@ class MoneyTest(MDApp):
         #     return
 
         if len(text) > 2:
-            self.clear_list("container")
+            self.clear_list(self.root.ids.container)
             search_person = json.loads(requests.get(f"{url}/get_account_skeleton_list").text)
             LIST = search(search_person, text, self.search_sig_int)
             if LIST is None:
@@ -295,14 +298,14 @@ class MoneyTest(MDApp):
                     return
                 my_list.append(search_person[i])
 
-            self.clear_list("container")
+            self.clear_list(self.root.ids.container)
             for i in my_list:
                 self.string_person(i)
             self.text_search = text
 
     @mainthread
     def clear_list(self, id):
-        eval(f"self.root.ids.{id}.clear_widgets()")
+        id.clear_widgets()
 
     @mainthread
     def string_person(self, puple):
@@ -558,15 +561,14 @@ class MoneyTest(MDApp):
                     self.send_message("Недостаточно средст")
                 else:
                     json = kvant_lib.change_balance(-sum, id, self.dialog_change.content_cls.ids.secondary_field.text, self.root.ids.login.text, self.root.ids.password.text)
-                    requests.post(url=f"{url}/execute", data=json.encode("utf-8"))
                     self.send_message("Списано")
                     self.dialog_close("dialog_change")
 
             elif self.dialog_change.title == "Начислить":
                 json = kvant_lib.change_balance(sum, id, self.dialog_change.content_cls.ids.secondary_field.text, self.root.ids.login.text, self.root.ids.password.text)
-                requests.post(url=f"{url}/execute", data=json.encode("utf-8"))
                 self.send_message("Начислино")
                 self.dialog_close("dialog_change")
+            requests.post(url=f"{url}/execute", data=json.encode("utf-8"))
         except ValueError:
             self.send_message("Введите сумму начисления")
         self.thread_end = True
@@ -832,50 +834,111 @@ class MoneyTest(MDApp):
         print("Конец")
 
     def group_teachers(self):
-        self.screen("groups_list")
-        self.threading_action("self.root.ids.my_list_students.clear_widgets()")
-        self.threading_action("self.root.ids.list_teachers.clear_widgets()")
         self.root.ids.spinner_my_students.active = True
         self.root.ids.spinner_teachers.active = True
-        for key, item in self.children.items():
-            if item.get("creator") == self.root.ids.login.text:
-                self.row_students(item.get("name"), item.get("id"), item.get('birthdate'), self.root.ids.my_list_students, "groups_list")
-            if len(key) == 6:
-                self.list_teachers(item.get("name"), item.get("id"))
-        self.root.ids.spinner_my_students.active = False
-        self.root.ids.spinner_teachers.active = False
+        self.screen("groups_list")
+        children = json.loads(requests.get(f"{url}/get_account_skeleton_list").text)
+        self.clear_list(self.root.ids.my_list_students)
+        self.clear_list(self.root.ids.list_teachers)
+        self.row_students(self.root.ids.login.text, self.root.ids.my_list_students, children, "groups_list")
+        self.list_teachers(children)
+
 
     @mainthread
-    def list_teachers(self, name, id_user):
-        self.root.ids.list_teachers.add_widget(
-            TwoLineIconListItem(
-                text=name,
-                secondary_text=f"ID: {id_user}",
-                on_release=lambda x: threading.Thread(target=self.showing_other_students, args=(x,)).start()
-            ),
-        )
+    def list_teachers(self, children):
+        for key, item in children.items():
+            if len(key) == 6:
+                self.root.ids.list_teachers.add_widget(
+                    TwoLineIconListItem(
+                        text=item.get("name"),
+                        secondary_text=f"ID: {item.get('id')}",
+                        on_release=lambda x: threading.Thread(target=self.showing_other_students, args=(x,)).start()
+                    ),
+                )
+        self.root.ids.spinner_teachers.active = False
 
     def showing_other_students(self, x):
+        children = json.loads(requests.get(f"{url}/get_account_skeleton_list").text)
         id_name = x.secondary_text.replace("ID: ", "")
+        self.id_teacher = id_name
         self.screen("screen_students_teachers")
-        self.threading_action("self.root.ids.list_students_other_teachers.clear_widgets()")
+        self.clear_list(self.root.ids.list_students_other_teachers)
         self.root.ids.spinner_students_teacher.active = True
         print("adadadad")
-        for key, item in self.children.items():
-            if item.get("creator") == id_name:
-                self.row_students(item.get("name"), item.get("id"), item.get('birthdate'), self.root.ids.list_students_other_teachers, "screen_students_teachers")
+        self.row_students(id_name, self.root.ids.list_students_other_teachers, children, "screen_students_teachers")
         self.root.ids.spinner_students_teacher.active = False
 
     @mainthread
-    def row_students(self, name, id_students, birthdate, id_list, screen):
-        id_list.add_widget(
-            ThreeLineIconListItem(
-                text=name,
-                secondary_text=birthdate,
-                tertiary_text=f"ID: {id_students}",
-                on_release=lambda x: self.dialog_windows(x, screen)
-            ),
-        )
+    def row_students(self, id_name, id_list, children, screen):
+        for key, item in children.items():
+            if item.get("creator") == id_name:
+                id_list.add_widget(
+                    ThreeLineIconListItem(
+                        text=item.get("name"),
+                        secondary_text=str(item.get("balance")),
+                        tertiary_text=f"ID: {item.get('id')}",
+                        on_release=lambda x: self.dialog_windows(x, screen)
+                    ),
+                )
+        self.root.ids.spinner_my_students.active = False
+
+    def give_to_all_dialog(self, of):
+        if self.dialog_accrual:
+            self.dialog_accrual = None
+        if not self.dialog_accrual:
+            self.dialog_accrual = MDDialog(
+                radius=[20, 7, 20, 7],
+                title=f"",
+                type="custom",
+                content_cls=MDBoxLayout(
+                    MDTextField(
+                        id="sum_field",
+                        input_filter='float',
+                        hint_text=f"Сумма",
+                    ),
+                    MDTextField(
+                        id="what_field",
+                        hint_text=f"За что",
+                    ),
+                    orientation="vertical",
+                    spacing="12dp",
+                    size_hint_y=None,
+                    height="120dp",
+                ),
+                buttons=[
+                    MDFlatButton(
+                        text="Отмена",
+                        theme_text_color="Custom",
+                        text_color=self.theme_cls.primary_color,
+                        on_release=lambda x: self.dialog_close("dialog_change")
+                    ),
+                    MDFlatButton(
+                        text="Начислить",
+                        theme_text_color="Custom",
+                        text_color=self.theme_cls.primary_color,
+                        on_release=lambda x: threading.Thread(target=self.give_to_all, args=(of,)).start()
+                    ),
+                ],
+
+            )
+            self.dialog_accrual.open()
+
+    def give_to_all(self, of):
+        self.dialog_close("dialog_accrual")
+        children = json.loads(requests.get(f"{url}/get_account_skeleton_list").text)
+        for key, item in children.items():
+            id_name = self.root.ids.login.text if of=='mine' else self.id_teacher
+            amount = int(self.dialog_accrual.content_cls.ids.sum_field.text)
+            for_what = self.dialog_accrual.content_cls.ids.what_field.text
+            print(amount, key, for_what)
+            if item.get("creator") == id_name:
+                jsons = kvant_lib.change_balance(amount, key, for_what, self.root.ids.login.text, self.root.ids.password.text)
+                print(json)
+                res = requests.post(url=f"{url}/execute", data=jsons.encode("utf-8"))
+                # print(res.text)
+                print(res.status_code)
+        # self.send_message('Начислено')
+
 
 
 if __name__ == "__main__":
